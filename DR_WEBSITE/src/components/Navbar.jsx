@@ -1,19 +1,14 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { Eye, Home, Search, Calendar, User, LogOut } from 'lucide-react';
 import { authService } from '../services/auth.service';
-import { useAppContext } from '../context/AppContext';
 import useDarkMode from '../hooks/useDarkMode';
 
 const Navbar = () => {
-  const navigate = useNavigate();
-  const { setIsAuthenticated } = useAppContext();
   const [isDark, setIsDark] = useDarkMode();
 
   const handleLogout = () => {
     authService.logout();
-    setIsAuthenticated(false);
-    navigate('/login');
   };
 
   const linkClass = ({ isActive }) =>
@@ -31,17 +26,32 @@ const Navbar = () => {
         {/* Logo */}
         <div className="flex items-center gap-2">
           <Eye className="h-7 w-7 text-blue-600" />
-          <span className={`font-semibold text-lg tracking-wide ${isDark ? 'text-white' : 'text-gray-800'}`}>
+          <span
+            className={`font-semibold text-lg tracking-wide ${
+              isDark ? 'text-white' : 'text-gray-800'
+            }`}
+          >
             EyeCare Portal
           </span>
         </div>
 
         {/* Links */}
         <div className="flex items-center gap-3">
-          <NavLink to="/" className={linkClass}><Home size={18} />Home</NavLink>
-          <NavLink to="/search" className={linkClass}><Search size={18} />Search</NavLink>
-          <NavLink to="/sessions" className={linkClass}><Calendar size={18} />Sessions</NavLink>
-          <NavLink to="/profile" className={linkClass}><User size={18} />Profile</NavLink>
+          <NavLink to="/" className={linkClass}>
+            <Home size={18} /> Home
+          </NavLink>
+
+          <NavLink to="/search" className={linkClass}>
+            <Search size={18} /> Search
+          </NavLink>
+
+          <NavLink to="/sessions" className={linkClass}>
+            <Calendar size={18} /> Sessions
+          </NavLink>
+
+          <NavLink to="/profile" className={linkClass}>
+            <User size={18} /> Profile
+          </NavLink>
 
           <button
             onClick={() => setIsDark(!isDark)}

@@ -1,16 +1,9 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { Navigate, Outlet } from 'react-router-dom';
+import { authService } from '../services/auth.service';
 
 const ProtectedRoute = () => {
-  const { isAuthenticated } = useAppContext();
-  const location = useLocation();
+  const isAuthenticated = authService.isAuthenticated();
 
-  // Allow access to login without auth
-  if (!isAuthenticated && location.pathname === '/login') {
-    return <Outlet />;
-  }
-
-  // Block all other routes if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }

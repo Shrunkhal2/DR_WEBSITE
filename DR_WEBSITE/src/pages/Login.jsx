@@ -13,24 +13,32 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
-      authService.login(username, password);
+      const data = await authService.login(username, password);
+
+      // Persist auth data
+      localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
       setIsAuthenticated(true);
       navigate('/');
-    } catch {
-      setError('Invalid credentials');
+    } catch (err) {
+      setError('Invalid username or password');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    
     <div
-      className={`min-h-screen flex items-center justify-center px-4${
+      className={`min-h-screen flex items-center justify-center px-4 ${
         isDark
           ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
           : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100'
@@ -88,9 +96,10 @@ const Login = () => {
 
           <button
             type="submit"
-            className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium transition"
+            disabled={loading}
+            className="w-full mt-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white py-2.5 rounded-lg font-medium transition"
           >
-            Login
+            {loading ? 'Logging in…' : 'Login'}
           </button>
         </form>
 
@@ -99,7 +108,7 @@ const Login = () => {
           <button onClick={() => setIsDark(!isDark)}>
             {isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           </button>
-          <span>Demo: any credentials</span>
+          <span>Demo: doctor / password123</span>
         </div>
       </div>
     </div>

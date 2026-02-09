@@ -1,47 +1,79 @@
-import { storageService, STORAGE_KEYS } from './storage.service';
-
-// Simple but defensible authentication service
-// Designed to be replaceable with real backend auth later
+const API_BASE_URL = "http://localhost:5001";
 
 export const authService = {
-  login(username, password) {
-    // Basic validation (prototype-level)
-    if (!username || !password) {
-      throw new Error('Invalid credentials');
-    }
-
-    const authPayload = {
-      token: 'mock-jwt-token',
-      user: {
-        username,
-        role: 'doctor'
+  // --------------------
+  // LOGIN
+  // --------------------
+  async login(username, password) {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      expiresAt: Date.now() + 60 * 60 * 1000 // 1 hour
-    };
+      body: JSON.stringify({ username, password }),
+    });
 
-    storageService.set(STORAGE_KEYS.AUTH, authPayload);
-    return authPayload;
-  },
-
-  logout() {
-    storageService.remove(STORAGE_KEYS.AUTH);
-  },
-
-  isAuthenticated() {
-    const session = storageService.get(STORAGE_KEYS.AUTH);
-    if (!session) return false;
-
-    // Token expiry check
-    if (session.expiresAt < Date.now()) {
-      this.logout();
-      return false;
+    if (!res.ok) {
+      throw new Error("Invalid credentials");
     }
 
-    return true;
+    const data = await res.json();
+
+    // Persist JWT + user
+    localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    return data;
   },
 
-  getCurrentUser() {
-    const session = storageService.get(STORAGE_KEYS.AUTH);
-    return session?.user || null;
-  }
+  // --------------------
+  // LOGOUT
+  // --------------------
+  logout() {
+    this.forceLogout();
+  },
+
+  forceLogout() {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+
+    // Hard redirect to clear app state
+    window.location.href = "/login";
+  },
+
+  // --------------------
+  // AUTH CHECK
+  // --------------------
+  isAuthenticated() {
+    return !!localStorage.getItem("access_token");
+  },
+
+  // --------------------
+  // CURRENT USER (JWT-PROTECTED)
+  // --------------------
+  async getCurrentUser() {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      this.forceLogout();
+      throw new Error("No token");
+    }
+
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Token expired / invalid
+    if (res.status === 401) {
+      this.forceLogout();
+      throw new Error("Session expired");
+    }
+
+    if (!res.ok) {
+      throw new Error("Unauthorized");
+    }
+
+    return res.json();
+  },
 };
